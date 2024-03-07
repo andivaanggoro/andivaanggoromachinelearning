@@ -1,0 +1,856 @@
+{
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python",
+      "version": "3.10.13",
+      "mimetype": "text/x-python",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "file_extension": ".py"
+    },
+    "kaggle": {
+      "accelerator": "none",
+      "dataSources": [
+        {
+          "sourceId": 3136,
+          "databundleVersionId": 26502,
+          "sourceType": "competition"
+        }
+      ],
+      "isInternetEnabled": false,
+      "language": "python",
+      "sourceType": "notebook",
+      "isGpuEnabled": false
+    },
+    "colab": {
+      "name": "Exercise: Arithmetic and Variables",
+      "provenance": [],
+      "include_colab_link": true
+    }
+  },
+  "nbformat_minor": 0,
+  "nbformat": 4,
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Rizkyepk/ML/blob/main/week_1/Kaggle/Exercise_Arithmetic_and_Variables.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "source": [
+        "\n",
+        "# IMPORTANT: RUN THIS CELL IN ORDER TO IMPORT YOUR KAGGLE DATA SOURCES\n",
+        "# TO THE CORRECT LOCATION (/kaggle/input) IN YOUR NOTEBOOK,\n",
+        "# THEN FEEL FREE TO DELETE THIS CELL.\n",
+        "# NOTE: THIS NOTEBOOK ENVIRONMENT DIFFERS FROM KAGGLE'S PYTHON\n",
+        "# ENVIRONMENT SO THERE MAY BE MISSING LIBRARIES USED BY YOUR\n",
+        "# NOTEBOOK.\n",
+        "\n",
+        "import os\n",
+        "import sys\n",
+        "from tempfile import NamedTemporaryFile\n",
+        "from urllib.request import urlopen\n",
+        "from urllib.parse import unquote, urlparse\n",
+        "from urllib.error import HTTPError\n",
+        "from zipfile import ZipFile\n",
+        "import tarfile\n",
+        "import shutil\n",
+        "\n",
+        "CHUNK_SIZE = 40960\n",
+        "DATA_SOURCE_MAPPING = 'titanic:https%3A%2F%2Fstorage.googleapis.com%2Fkaggle-competitions-data%2Fkaggle-v2%2F3136%2F26502%2Fbundle%2Farchive.zip%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com%252F20240302%252Fauto%252Fstorage%252Fgoog4_request%26X-Goog-Date%3D20240302T183435Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3D42d62b1be70171f23bd4f3257e3bc0af9fa4e5989a2078ff07527f11ebdff444ebe27bd706af988a58bc5af9455fbef5f31a6a1f9feb95fcfe21def20830fc25a493abc25859d0faa581b65a94426ad41941d8f2ba6c8aa3a5b803f8bb8e3d6ae8caad16721f0655e4e5d8a290b705c2ee3ef928643c1c50904b1d41784db7e793183e4d6536e49aad48bc18af2fe11b387e638e894721546636a9c7f0b599b1d5cc6954752ffeafcc84b1156e2bd0c56037b25023aac3be41bd00acd8a3202b4aa761b0e96b5edc64663a19ebbde6759e1c4be5ad8ad0968be049707aacc507844a3744bd08fe6827aedaa90cb0539b65b32c983b3f11e23927400c018fb18a'\n",
+        "\n",
+        "KAGGLE_INPUT_PATH='/kaggle/input'\n",
+        "KAGGLE_WORKING_PATH='/kaggle/working'\n",
+        "KAGGLE_SYMLINK='kaggle'\n",
+        "\n",
+        "!umount /kaggle/input/ 2> /dev/null\n",
+        "shutil.rmtree('/kaggle/input', ignore_errors=True)\n",
+        "os.makedirs(KAGGLE_INPUT_PATH, 0o777, exist_ok=True)\n",
+        "os.makedirs(KAGGLE_WORKING_PATH, 0o777, exist_ok=True)\n",
+        "\n",
+        "try:\n",
+        "  os.symlink(KAGGLE_INPUT_PATH, os.path.join(\"..\", 'input'), target_is_directory=True)\n",
+        "except FileExistsError:\n",
+        "  pass\n",
+        "try:\n",
+        "  os.symlink(KAGGLE_WORKING_PATH, os.path.join(\"..\", 'working'), target_is_directory=True)\n",
+        "except FileExistsError:\n",
+        "  pass\n",
+        "\n",
+        "for data_source_mapping in DATA_SOURCE_MAPPING.split(','):\n",
+        "    directory, download_url_encoded = data_source_mapping.split(':')\n",
+        "    download_url = unquote(download_url_encoded)\n",
+        "    filename = urlparse(download_url).path\n",
+        "    destination_path = os.path.join(KAGGLE_INPUT_PATH, directory)\n",
+        "    try:\n",
+        "        with urlopen(download_url) as fileres, NamedTemporaryFile() as tfile:\n",
+        "            total_length = fileres.headers['content-length']\n",
+        "            print(f'Downloading {directory}, {total_length} bytes compressed')\n",
+        "            dl = 0\n",
+        "            data = fileres.read(CHUNK_SIZE)\n",
+        "            while len(data) > 0:\n",
+        "                dl += len(data)\n",
+        "                tfile.write(data)\n",
+        "                done = int(50 * dl / int(total_length))\n",
+        "                sys.stdout.write(f\"\\r[{'=' * done}{' ' * (50-done)}] {dl} bytes downloaded\")\n",
+        "                sys.stdout.flush()\n",
+        "                data = fileres.read(CHUNK_SIZE)\n",
+        "            if filename.endswith('.zip'):\n",
+        "              with ZipFile(tfile) as zfile:\n",
+        "                zfile.extractall(destination_path)\n",
+        "            else:\n",
+        "              with tarfile.open(tfile.name) as tarfile:\n",
+        "                tarfile.extractall(destination_path)\n",
+        "            print(f'\\nDownloaded and uncompressed: {directory}')\n",
+        "    except HTTPError as e:\n",
+        "        print(f'Failed to load (likely expired) {download_url} to path {destination_path}')\n",
+        "        continue\n",
+        "    except OSError as e:\n",
+        "        print(f'Failed to load {download_url} to path {destination_path}')\n",
+        "        continue\n",
+        "\n",
+        "print('Data source import complete.')\n"
+      ],
+      "metadata": {
+        "id": "DDYQdKEvclmh",
+        "outputId": "b2770fe2-759f-4e3a-cdc1-81ae82ce40a2",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "cell_type": "code",
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading titanic, 34877 bytes compressed\n",
+            "\r[==================================================] 34877 bytes downloaded\n",
+            "Downloaded and uncompressed: titanic\n",
+            "Data source import complete.\n"
+          ]
+        }
+      ],
+      "execution_count": 1
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**This notebook is an exercise in the [Intro to Programming](https://www.kaggle.com/learn/intro-to-programming) course.  You can reference the tutorial at [this link](https://www.kaggle.com/alexisbcook/arithmetic-and-variables).**\n",
+        "\n",
+        "---\n"
+      ],
+      "metadata": {
+        "id": "hbikSdDnclmk"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "This exercise will get you started with running your own code.  \n",
+        "\n",
+        "# Set up the notebook\n",
+        "\n",
+        "To begin, run the code in the next cell.\n",
+        "- Begin by clicking inside the code cell.  \n",
+        "- Click on the triangle (in the shape of a \"Play button\") that appears to the left of the code cell.\n",
+        "- If your code was run sucessfully, you will see `Setup Complete` as output below the cell.\n",
+        "\n",
+        "Instead of clicking on the triangle, you can also run code by pressing Shift + Enter on your keyboard.  Try this now!  Nothing bad will happen if you run the code more than once."
+      ],
+      "metadata": {
+        "id": "pPDlyfD0clmm"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Set up the exercise\n",
+        "from learntools.core import binder\n",
+        "binder.bind(globals())\n",
+        "from learntools.intro_to_programming.ex1 import *\n",
+        "print('Setup complete.')"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:07:28.85611Z",
+          "iopub.execute_input": "2024-03-02T17:07:28.856483Z",
+          "iopub.status.idle": "2024-03-02T17:07:28.863801Z",
+          "shell.execute_reply.started": "2024-03-02T17:07:28.856457Z",
+          "shell.execute_reply": "2024-03-02T17:07:28.862583Z"
+        },
+        "trusted": true,
+        "id": "Pu76dRfSclmn",
+        "outputId": "e3652bc2-d0cc-4e45-f60f-779c8849306c"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "Setup complete.\n",
+          "output_type": "stream"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The code above sets up the notebook so that it can check your answers in this exercise.  You should never modify this code.  (Otherwise, the notebook won't be able to verify that you have successfully completed the exercise.)\n",
+        "\n",
+        "After finishing all of the questions below, you'll see the exercise marked as complete on the [course page](http://www.kaggle.com/learn/intro-to-programming).  Once you complete all of the lessons, you'll get a course completion certificate!\n",
+        "\n",
+        "# Question 1\n",
+        "\n",
+        "Next, you will run some code from the tutorial, so you can see how it works for yourself.  Run the next code cell without changes."
+      ],
+      "metadata": {
+        "id": "pqpuXr_fclmo"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(\"Hello, world!\")\n",
+        "\n",
+        "# DO NOT REMOVE: Mark this question as completed\n",
+        "q1.check()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:01:31.7916Z",
+          "iopub.execute_input": "2024-03-02T17:01:31.792532Z",
+          "iopub.status.idle": "2024-03-02T17:01:31.809384Z",
+          "shell.execute_reply.started": "2024-03-02T17:01:31.792498Z",
+          "shell.execute_reply": "2024-03-02T17:01:31.808438Z"
+        },
+        "trusted": true,
+        "id": "JwBszzJDclmp",
+        "outputId": "93320587-d770-4b43-a250-324717f92e3b"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "Hello, world!\n",
+          "output_type": "stream"
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"outcomeType\": 1, \"valueTowardsCompletion\": 0.2, \"interactionType\": 1, \"questionType\": 2, \"questionId\": \"1_RunHelloWorld\", \"learnToolsVersion\": \"0.3.4\", \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\"}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "If you see 'Hello, world!' above, You have successfully printed a message, and you're ready to move on to the next question.",
+            "text/markdown": "<span style=\"color:#33cc33\">If you see 'Hello, world!' above, You have successfully printed a message, and you're ready to move on to the next question.</span>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "You just ran code to print `Hello world!`, which you should see in the output above.\n",
+        "\n",
+        "The second line of code (`q1.check()`) checks your answer.  You should never modify this checking code; if you remove it, you won't get credit for completing the problem.\n",
+        "\n",
+        "# Question 2\n",
+        "\n",
+        "Now, you will print another message of your choosing.  To do this, change `print(\"Your message here!\")` to use a different message.  For instance, you might like to change it to something like:\n",
+        "- `print(\"Good morning!\")`\n",
+        "- `print(\"I am learning how to code :D\")`\n",
+        "\n",
+        "Or, you might like to see what happens if you write something like `print(\"3+4\")`.  Does it return 7, or does it just think of `\"3+4\"` as just another message?\n",
+        "\n",
+        "Make sure that your message is enclosed in quotation marks (`\"`), and the message itself does not use quotation marks. For instance, this will throw an error: `print(\"She said \"great job\" and gave me a high-five!\")` because the message contains quotation marks.  If you decide to take the Python course after completing this course, you will learn more about how to avoid this error in [Lesson 6](https://www.kaggle.com/colinmorris/strings-and-dictionaries).\n",
+        "\n",
+        "Feel free to try out multiple messages!"
+      ],
+      "metadata": {
+        "id": "zFYfTHL4clmq"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# TODO: Change the message\n",
+        "print(\"Your message here!\")\n",
+        "print(\"Good morning\")\n",
+        "print(\"3+4\")\n",
+        "\n",
+        "# DO NOT REMOVE: Mark this question as completed\n",
+        "q2.check()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:09:27.111769Z",
+          "iopub.execute_input": "2024-03-02T17:09:27.112255Z",
+          "iopub.status.idle": "2024-03-02T17:09:27.123962Z",
+          "shell.execute_reply.started": "2024-03-02T17:09:27.112221Z",
+          "shell.execute_reply": "2024-03-02T17:09:27.122433Z"
+        },
+        "trusted": true,
+        "id": "9wDg5aILclmr",
+        "outputId": "5c04aa07-b626-41a1-a6dd-0892165f5b46"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "Your message here!\nGood morning\n3+4\n",
+          "output_type": "stream"
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"outcomeType\": 1, \"valueTowardsCompletion\": 0.2, \"interactionType\": 1, \"questionType\": 2, \"questionId\": \"2_PrintAnotherMsg\", \"learnToolsVersion\": \"0.3.4\", \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\"}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Once you have printed your own message, you're ready to move on to the next question.",
+            "text/markdown": "<span style=\"color:#33cc33\">Once you have printed your own message, you're ready to move on to the next question.</span>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Question 3\n",
+        "\n",
+        "As you learned in the tutorial, a comment in Python has a pound sign (`#`) in front of it, which tells Python to ignore the text after it.\n",
+        "\n",
+        "Putting a pound sign in front of a line of code will make Python ignore that code.  For instance, this line would be ignored by Python, and nothing would appear in the output:\n",
+        "```python\n",
+        "#print(1+2)\n",
+        "```\n",
+        "Removing the pound sign will make it so that you can run the code again. When we remove the pound sign in front of a line of code, we call this **uncommenting**.\n",
+        "\n",
+        "In this problem, you will uncomment two lines in the code cell below and view the output:\n",
+        "- Remove the `#` in front of `q3.hint()`.  To avoid errors, do NOT remove the `#` in front of `# Uncomment to view hint`.  \n",
+        "- Next, remove the `#` in front of `q3.solution()`.\n",
+        "\n",
+        "As in the previous questions, do not change the final line of code that marks your work as completed."
+      ],
+      "metadata": {
+        "id": "-P0qbH9Vclms"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Uncomment to get a hint\n",
+        "q3.hint()\n",
+        "\n",
+        "# Uncomment to view solution\n",
+        "q3.solution()\n",
+        "\n",
+        "# DO NOT REMOVE: Check your answer\n",
+        "q3.check()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:10:31.896479Z",
+          "iopub.execute_input": "2024-03-02T17:10:31.896919Z",
+          "iopub.status.idle": "2024-03-02T17:10:31.917042Z",
+          "shell.execute_reply.started": "2024-03-02T17:10:31.89689Z",
+          "shell.execute_reply": "2024-03-02T17:10:31.915752Z"
+        },
+        "trusted": true,
+        "id": "99SyL08mclmt",
+        "outputId": "e95bf15d-d44e-4b4b-8e1a-1536fe9a09c0"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"interactionType\": 2, \"questionType\": 2, \"questionId\": \"3_LearnCheckingCode\", \"learnToolsVersion\": \"0.3.4\", \"valueTowardsCompletion\": 0.0, \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\", \"outcomeType\": 4}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Hint: If you're ever stuck on a question, it's a good idea to look at the hint before viewing the solution.",
+            "text/markdown": "<span style=\"color:#3366cc\">Hint:</span> If you're ever stuck on a question, it's a good idea to look at the hint before viewing the solution."
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"interactionType\": 3, \"questionType\": 2, \"questionId\": \"3_LearnCheckingCode\", \"learnToolsVersion\": \"0.3.4\", \"valueTowardsCompletion\": 0.0, \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\", \"outcomeType\": 4}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Solution: If you're still stuck on a question after viewing the hint and re-reading the tutorial, you can view the solution.  You can also view the solution after you have successfully submitted your own answer, to check if the official solution is any different (there may be more than one right answer!).",
+            "text/markdown": "<span style=\"color:#33cc99\">Solution:</span> If you're still stuck on a question after viewing the hint and re-reading the tutorial, you can view the solution.  You can also view the solution after you have successfully submitted your own answer, to check if the official solution is any different (there may be more than one right answer!)."
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"outcomeType\": 1, \"valueTowardsCompletion\": 0.2, \"interactionType\": 1, \"questionType\": 2, \"questionId\": \"3_LearnCheckingCode\", \"learnToolsVersion\": \"0.3.4\", \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\"}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Once you have printed the hint and the solution, you're ready to move on to the next question.",
+            "text/markdown": "<span style=\"color:#33cc33\">Once you have printed the hint and the solution, you're ready to move on to the next question.</span>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "In the next question, and in most of the exercises in this course, you will have the option to uncomment to view hints and solutions.  Once you feel comfortable with uncommenting, continue to the next question.\n"
+      ],
+      "metadata": {
+        "id": "XE910s3qclmt"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Question 4\n",
+        "\n",
+        "In the tutorial, you defined several variables to calculate the total number of seconds in a year.  Run the next code cell to do the calculation here."
+      ],
+      "metadata": {
+        "id": "-xwGHjNmclmu"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Create variables\n",
+        "num_years = 4\n",
+        "days_per_year = 365\n",
+        "hours_per_day = 24\n",
+        "mins_per_hour = 60\n",
+        "secs_per_min = 60\n",
+        "\n",
+        "# Calculate number of seconds in four years\n",
+        "total_secs = secs_per_min * mins_per_hour * hours_per_day * days_per_year * num_years\n",
+        "print(total_secs)"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:10:55.182744Z",
+          "iopub.execute_input": "2024-03-02T17:10:55.183166Z",
+          "iopub.status.idle": "2024-03-02T17:10:55.189868Z",
+          "shell.execute_reply.started": "2024-03-02T17:10:55.183136Z",
+          "shell.execute_reply": "2024-03-02T17:10:55.188604Z"
+        },
+        "trusted": true,
+        "id": "1CwPBFc5clmu",
+        "outputId": "eba1e947-6088-4375-a13d-40259433780b"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "126144000\n",
+          "output_type": "stream"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Use the next code cell to:\n",
+        "- Define a variable `births_per_min` and set it to 250.  (There are on average 250 babies born each minute.)\n",
+        "- Define a variable `births_per_day` that contains the average number of babies born each day.  (To set the value of this variable, you should use `births_per_min` and some of the variables from the previous code cell.)\n",
+        "\n",
+        "Remember you can always get a hint if you need it!"
+      ],
+      "metadata": {
+        "id": "nBpaAtLEclmu"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# TODO: Set the value of the births_per_min variable\n",
+        "births_per_min = 250\n",
+        "\n",
+        "# TODO: Set the value of the births_per_day variable\n",
+        "births_per_day = births_per_min * mins_per_hour * hours_per_day\n",
+        "\n",
+        "# DO NOT REMOVE: Check your answer\n",
+        "q4.check()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:13:33.470066Z",
+          "iopub.execute_input": "2024-03-02T17:13:33.470496Z",
+          "iopub.status.idle": "2024-03-02T17:13:33.483821Z",
+          "shell.execute_reply.started": "2024-03-02T17:13:33.470465Z",
+          "shell.execute_reply": "2024-03-02T17:13:33.482386Z"
+        },
+        "trusted": true,
+        "id": "IQaAZzG0clmv",
+        "outputId": "4538cd0b-b89e-4980-ecd9-c3261895cb08"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"outcomeType\": 1, \"valueTowardsCompletion\": 0.2, \"interactionType\": 1, \"questionType\": 1, \"questionId\": \"4_BirthsPerYear\", \"learnToolsVersion\": \"0.3.4\", \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\"}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Correct",
+            "text/markdown": "<span style=\"color:#33cc33\">Correct</span>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Uncomment to get a hint\n",
+        "q4.hint()\n",
+        "\n",
+        "# Uncomment to view solution\n",
+        "q4.solution()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:12:03.20473Z",
+          "iopub.execute_input": "2024-03-02T17:12:03.205111Z",
+          "iopub.status.idle": "2024-03-02T17:12:03.219882Z",
+          "shell.execute_reply.started": "2024-03-02T17:12:03.205085Z",
+          "shell.execute_reply": "2024-03-02T17:12:03.218579Z"
+        },
+        "trusted": true,
+        "id": "BsL8JO-Jclmv",
+        "outputId": "43214efc-bc49-4db4-ff5c-e9a36566c552"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"interactionType\": 2, \"questionType\": 1, \"questionId\": \"4_BirthsPerYear\", \"learnToolsVersion\": \"0.3.4\", \"valueTowardsCompletion\": 0.0, \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\", \"outcomeType\": 4}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Hint: How can you use the variables to calculate the number of minutes in one day?  Once you have that, you need only multiply that number by the number of births per minute.",
+            "text/markdown": "<span style=\"color:#3366cc\">Hint:</span> How can you use the variables to calculate the number of minutes in one day?  Once you have that, you need only multiply that number by the number of births per minute."
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"interactionType\": 3, \"questionType\": 1, \"questionId\": \"4_BirthsPerYear\", \"learnToolsVersion\": \"0.3.4\", \"valueTowardsCompletion\": 0.0, \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\", \"outcomeType\": 4}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Solution: \n```python\n# Set the value of the births_per_min variable\nbirths_per_min = 250\n\n# Set the value of the births_per_day variable\nbirths_per_day = births_per_min * mins_per_hour * hours_per_day\n\n```",
+            "text/markdown": "<span style=\"color:#33cc99\">Solution:</span> \n```python\n# Set the value of the births_per_min variable\nbirths_per_min = 250\n\n# Set the value of the births_per_day variable\nbirths_per_day = births_per_min * mins_per_hour * hours_per_day\n\n```"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 🌶️ Question 5\n",
+        "\n",
+        "(Questions marked with a 🌶️ will be a little bit more challenging than the others!  Remember you can always get a hint or view the solution.)\n",
+        "\n",
+        "The [Titanic competition](https://www.kaggle.com/c/titanic) is Kaggle's most famous data science competition. In this competition, participants are challenged to build a machine learning model that can predict whether or not passengers survived the Titanic shipwreck, based on information like age, sex, family size, and ticket number.\n",
+        "\n",
+        "Run the next code cell without changes to load and preview the titanic data.\n",
+        "\n",
+        "Don't worry about the details of the code for now - the end result is just that the all of the titanic data has been loaded in a variable named `titanic_data`.  (In order to learn how to write this code yourself, you can take the [Python course](https://www.kaggle.com/learn/python) and then the [Pandas course](https://www.kaggle.com/learn/pandas).)"
+      ],
+      "metadata": {
+        "id": "dE9Ey5Znclmw"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Load the data from the titanic competition\n",
+        "import pandas as pd\n",
+        "titanic_data = pd.read_csv(\"../input/titanic/train.csv\")\n",
+        "\n",
+        "# Show the first five rows of the data\n",
+        "titanic_data.head()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:14:10.950227Z",
+          "iopub.execute_input": "2024-03-02T17:14:10.950711Z",
+          "iopub.status.idle": "2024-03-02T17:14:10.977823Z",
+          "shell.execute_reply.started": "2024-03-02T17:14:10.950678Z",
+          "shell.execute_reply": "2024-03-02T17:14:10.976502Z"
+        },
+        "trusted": true,
+        "id": "oWL3GRA5clmw",
+        "outputId": "b461db06-c99c-4ac8-b4ec-50dc5197d080"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "execution_count": 37,
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "   PassengerId  Survived  Pclass  \\\n0            1         0       3   \n1            2         1       1   \n2            3         1       3   \n3            4         1       1   \n4            5         0       3   \n\n                                                Name     Sex   Age  SibSp  \\\n0                            Braund, Mr. Owen Harris    male  22.0      1   \n1  Cumings, Mrs. John Bradley (Florence Briggs Th...  female  38.0      1   \n2                             Heikkinen, Miss. Laina  female  26.0      0   \n3       Futrelle, Mrs. Jacques Heath (Lily May Peel)  female  35.0      1   \n4                           Allen, Mr. William Henry    male  35.0      0   \n\n   Parch            Ticket     Fare Cabin Embarked  \n0      0         A/5 21171   7.2500   NaN        S  \n1      0          PC 17599  71.2833   C85        C  \n2      0  STON/O2. 3101282   7.9250   NaN        S  \n3      0            113803  53.1000  C123        S  \n4      0            373450   8.0500   NaN        S  ",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>PassengerId</th>\n      <th>Survived</th>\n      <th>Pclass</th>\n      <th>Name</th>\n      <th>Sex</th>\n      <th>Age</th>\n      <th>SibSp</th>\n      <th>Parch</th>\n      <th>Ticket</th>\n      <th>Fare</th>\n      <th>Cabin</th>\n      <th>Embarked</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1</td>\n      <td>0</td>\n      <td>3</td>\n      <td>Braund, Mr. Owen Harris</td>\n      <td>male</td>\n      <td>22.0</td>\n      <td>1</td>\n      <td>0</td>\n      <td>A/5 21171</td>\n      <td>7.2500</td>\n      <td>NaN</td>\n      <td>S</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>2</td>\n      <td>1</td>\n      <td>1</td>\n      <td>Cumings, Mrs. John Bradley (Florence Briggs Th...</td>\n      <td>female</td>\n      <td>38.0</td>\n      <td>1</td>\n      <td>0</td>\n      <td>PC 17599</td>\n      <td>71.2833</td>\n      <td>C85</td>\n      <td>C</td>\n    </tr>\n    <tr>\n      <th>2</th>\n      <td>3</td>\n      <td>1</td>\n      <td>3</td>\n      <td>Heikkinen, Miss. Laina</td>\n      <td>female</td>\n      <td>26.0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>STON/O2. 3101282</td>\n      <td>7.9250</td>\n      <td>NaN</td>\n      <td>S</td>\n    </tr>\n    <tr>\n      <th>3</th>\n      <td>4</td>\n      <td>1</td>\n      <td>1</td>\n      <td>Futrelle, Mrs. Jacques Heath (Lily May Peel)</td>\n      <td>female</td>\n      <td>35.0</td>\n      <td>1</td>\n      <td>0</td>\n      <td>113803</td>\n      <td>53.1000</td>\n      <td>C123</td>\n      <td>S</td>\n    </tr>\n    <tr>\n      <th>4</th>\n      <td>5</td>\n      <td>0</td>\n      <td>3</td>\n      <td>Allen, Mr. William Henry</td>\n      <td>male</td>\n      <td>35.0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>373450</td>\n      <td>8.0500</td>\n      <td>NaN</td>\n      <td>S</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The data has a different row for each passenger.  \n",
+        "\n",
+        "The next code cell defines and prints the values of three variables:  \n",
+        "- `total` = total number of passengers who boarded the ship\n",
+        "- `survived` = number of passengers who survived the shipwreck\n",
+        "- `minors` = number of passengers under 18 years of age\n",
+        "\n",
+        "Run the code cell without changes.  (Don't worry about the details of how these variables are calculated for now.  You can learn more about how to calculate these values in the [Pandas course](https://www.kaggle.com/learn/pandas).)"
+      ],
+      "metadata": {
+        "id": "-a2oxENGclmx"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Number of total passengers\n",
+        "total = len(titanic_data)\n",
+        "print(total)\n",
+        "\n",
+        "# Number of passengers who survived\n",
+        "survived = (titanic_data.Survived == 1).sum()\n",
+        "print(survived)\n",
+        "\n",
+        "# Number of passengers under 18\n",
+        "minors = (titanic_data.Age < 18).sum()\n",
+        "print(minors)"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:15:16.716933Z",
+          "iopub.execute_input": "2024-03-02T17:15:16.717353Z",
+          "iopub.status.idle": "2024-03-02T17:15:16.72672Z",
+          "shell.execute_reply.started": "2024-03-02T17:15:16.717325Z",
+          "shell.execute_reply": "2024-03-02T17:15:16.725207Z"
+        },
+        "trusted": true,
+        "id": "DyBnc6Qcclmx",
+        "outputId": "5e8796d8-9564-4ad2-a7b0-ca4b6c4341bd"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "891\n342\n113\n",
+          "output_type": "stream"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "So,\n",
+        "- `total = 891` (there were 891 passengers on board the Titanic),\n",
+        "- `survived = 342` (342 passengers survived), and\n",
+        "- `minors = 113` (113 passengers were under the age of 18).\n",
+        "\n",
+        "In the code cell below, replace the underlines (`____`) with code to calculate the values for two more variables:\n",
+        "- `survived_fraction` should be set to the fraction of passengers who survived the Titanic disaster.\n",
+        "- `minors_fraction` should be the fraction of passengers who were minors (under the age of 18).\n",
+        "\n",
+        "For each variable, your answer should be a number between 0 and 1.  \n",
+        "\n",
+        "If you need a hint or want to view the solution, you can skip to the next code cell and uncomment the appropriate lines of code (`q5.hint()` and `q5.solution()`)."
+      ],
+      "metadata": {
+        "id": "H63tQS_Vclmx"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# TODO: Fill in the value of the survived_fraction variable\n",
+        "survived_fraction = survived/total\n",
+        "\n",
+        "# Print the value of the variable\n",
+        "print(survived_fraction)\n",
+        "\n",
+        "# TODO: Fill in the value of the minors_fraction variable\n",
+        "minors_fraction = minors/total\n",
+        "\n",
+        "# Print the value of the variable\n",
+        "print(minors_fraction)\n",
+        "\n",
+        "# DO NOT REMOVE: Check your answer\n",
+        "q5.check()"
+      ],
+      "metadata": {
+        "execution": {
+          "iopub.status.busy": "2024-03-02T17:17:45.257067Z",
+          "iopub.execute_input": "2024-03-02T17:17:45.257489Z",
+          "iopub.status.idle": "2024-03-02T17:17:45.269745Z",
+          "shell.execute_reply.started": "2024-03-02T17:17:45.257459Z",
+          "shell.execute_reply": "2024-03-02T17:17:45.26841Z"
+        },
+        "trusted": true,
+        "id": "JYDtqHCFclmy",
+        "outputId": "c6e8d5d0-2eae-45de-8991-7af0f1257588"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "name": "stdout",
+          "text": "0.3838383838383838\n0.12682379349046016\n",
+          "output_type": "stream"
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"outcomeType\": 1, \"valueTowardsCompletion\": 0.2, \"interactionType\": 1, \"questionType\": 1, \"questionId\": \"5_BonusTitanic\", \"learnToolsVersion\": \"0.3.4\", \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\"}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Correct",
+            "text/markdown": "<span style=\"color:#33cc33\">Correct</span>"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Uncomment to receive a hint\n",
+        "q5.hint()\n",
+        "\n",
+        "# Uncomment to view the solution\n",
+        "q5.solution()"
+      ],
+      "metadata": {
+        "trusted": true,
+        "id": "2xX_OwUDclmy",
+        "outputId": "e1e03384-9c85-42b1-e396-e8122ce86f57"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "<IPython.core.display.Javascript object>",
+            "application/javascript": "parent.postMessage({\"jupyterEvent\": \"custom.exercise_interaction\", \"data\": {\"interactionType\": 3, \"questionType\": 1, \"questionId\": \"5_BonusTitanic\", \"learnToolsVersion\": \"0.3.4\", \"valueTowardsCompletion\": 0.0, \"failureMessage\": \"\", \"exceptionClass\": \"\", \"trace\": \"\", \"outcomeType\": 4}}, \"*\")"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "Solution: \n```python\n# Fill in the value of the survived_fraction variable \nsurvived_fraction = survived/total\n\n# Print the value of the survived_fraction variable\nprint(survived_fraction)\n\n# Fill in the value of the minors_fraction variable\nminors_fraction = minors/total \n\n# Print the value of the minors_fraction variable\nprint(minors_fraction)\n\n```",
+            "text/markdown": "<span style=\"color:#33cc99\">Solution:</span> \n```python\n# Fill in the value of the survived_fraction variable \nsurvived_fraction = survived/total\n\n# Print the value of the survived_fraction variable\nprint(survived_fraction)\n\n# Fill in the value of the minors_fraction variable\nminors_fraction = minors/total \n\n# Print the value of the minors_fraction variable\nprint(minors_fraction)\n\n```"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Bonus Exercise\n",
+        "\n",
+        "As an **optional** next step, you're encouraged to make a submission to the Titanic competition.  \n",
+        "> To do this, follow the instructions in the **[notebook here](https://www.kaggle.com/alexisbcook/titanic-tutorial)**.  \n",
+        "\n",
+        "The notebook is beginner-friendly and does not assume you have any experience with coding.  At the same time, you'll learn how to author your own notebooks on Kaggle, and it gives you a great idea of what you'll be able to do if you continue to learn data science!\n",
+        "\n",
+        "# Keep going\n",
+        "\n",
+        "Congratulations!  You have just finished the first exercise in the Intro to Programming course!  \n",
+        "\n",
+        "You are now ready to learn how to **[organize your code with functions](https://www.kaggle.com/alexisbcook/functions)**."
+      ],
+      "metadata": {
+        "id": "FXpmhiltclmz"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n",
+        "*Have questions or comments? Visit the [course discussion forum](https://www.kaggle.com/learn/intro-to-programming/discussion) to chat with other learners.*"
+      ],
+      "metadata": {
+        "id": "D6mnGBU-clm0"
+      }
+    }
+  ]
+}
